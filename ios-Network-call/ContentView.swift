@@ -59,13 +59,45 @@ struct ContentView: View {
             throw GHerror.InvalidData;
         }
     }
+    
+    func postUser() async throws -> String {
+            let endpoint = "https://jsonplaceholder.typicode.com/posts"
+            
+            guard let url = URL(string: endpoint) else {
+                throw GHerror.InvalidUrl
+            }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            
+            let newUser = GitHubUser(login: "bholanathbarik9748", avatarUrl: "https://avatars.githubusercontent.com/u/583231", bio: "This is a bio")
+            
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            let data = try encoder.encode(newUser)
+            
+            request.httpBody = data
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let (responseData, response) = try await URLSession.shared.data(for: request)
+            
+            guard let response = response as? HTTPURLResponse, response.statusCode == 201 else {
+                throw GHerror.InvalidResponse
+            }
+            
+            if let responseString = String(data: responseData, encoding: .utf8) {
+                return responseString
+            } else {
+                throw GHerror.InvalidData
+            }
+        }
 }
 
 #Preview {
     ContentView()
 }
 
-struct GitHubUser: Decodable {
+struct GitHubUser: Decodable, Encodable {
     let login : String
     let avatarUrl: String
     let bio : String
